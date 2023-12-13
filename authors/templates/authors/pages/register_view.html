@@ -1,1 +1,54 @@
-<h1>Hello World</h1>
+{% extends "global/base.html" %}
+
+{% block title %}Register | {% endblock title %}
+
+{% block content %}
+    <div class="main-containt center container">
+        <h2>Register</h2>
+    </div>
+
+    {% include "recipes/partials/messages.html" %}
+
+    <div class="main-containt container">
+        <form action="{% url "authors:create" %}" method="POST">
+
+            {% csrf_token %}
+            
+            <div class="form-content form-content-grid">
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ form.id_for_label }}">{{ field.label }}</label>
+
+                        {{ field }}
+
+                        {% if field.help_text %}
+                            <p class="help-text">{{ field.help_text }}</p>
+                        {% endif %}
+
+                        {% if field.errors %}
+                            {{ field.errors }}
+                        {% endif %}
+
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="form-content form-content-grid">
+                    <div class="form-group">
+                        <div class="message message-error">
+                            {{ form.non_field_errors }}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="form-content form-content-grid">
+                <div class="form-group">
+                    <button type="submit">Send</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+{% endblock content %}
