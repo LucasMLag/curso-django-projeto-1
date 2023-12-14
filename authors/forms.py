@@ -4,17 +4,6 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
 
-# This method can change the widget atributes of the field without overwritting
-def add_attr(field, attr_name, attr_new_val):
-    existing = field.widget.attrs.get(attr_name, '')
-    field.widget.attrs[attr_name] = f'{existing} {attr_new_val}'.strip()
-
-
-# This method can change the widget 'placeholder' atribute of the field without overwritting
-def add_placeholder(field, placeholder_val):
-    field.widget.attrs['placeholder'] = placeholder_val
-
-
 def strong_password(password):
     regex = re.compile(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{8,}$')
 
@@ -27,21 +16,14 @@ def strong_password(password):
 
 class RegisterForm(forms.ModelForm):
 
-    # __init__ is used to call the method to change placeholders
-    def __init__(self, *args, **kwargs):
-
-        super().__init__(*args, **kwargs)
-        add_placeholder(self.fields['username'], 'Your username')
-        add_placeholder(self.fields['email'], 'Your e-mail')
-        add_placeholder(self.fields['first_name'], 'Ex.: John')
-        add_placeholder(self.fields['last_name'], 'Ex.: Doe')
-        add_placeholder(self.fields['password'], 'Type your password')
-        add_placeholder(self.fields['password2'], 'Repeat your password')
-
     # Fields inside of the meta class would be overwritten by the ones outside
 
     first_name = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Ex.: John',
+        }),
         label='First Name',
+
         # required=True,          # this is not needed, as it is default
         error_messages={
             'required': 'This field is required.'
@@ -49,6 +31,9 @@ class RegisterForm(forms.ModelForm):
     )
 
     last_name = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Ex.: Doe',
+        }),
         label='Last Name',
         error_messages={
             'required': 'This field is required.'
@@ -56,24 +41,39 @@ class RegisterForm(forms.ModelForm):
     )
 
     username = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Your username',
+        }),
         label='Username',
+        help_text=('Letters, numbers or @/./+/-/_ only. Between 4 and 150 characters.'),
+
         error_messages={
-            'required': 'This field is required.'
+            'required': 'This field is required.',
+            'min_length': 'Username must have at least 4 characters.',
+            'max_length': 'Username must have 150 or less characters.'
         },
-        help_text=('Letters, numbers and @/./+/-/_ only.'),
+        min_length=4,
+        max_length=150,
     )
 
     email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'placeholder': 'Your e-mail',
+        }),
         label='E-mail',
+        help_text=('The e-mail must be valid.'),
+
         error_messages={
             'required': 'This field is required.'
         },
-        help_text=('The e-mail must be valid.'),
     )
 
     password = forms.CharField(
-        widget=forms.PasswordInput(),
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Your password',
+        }),
         label='Password',
+
         error_messages={
             'required': 'This field is required.'
         },
@@ -81,8 +81,11 @@ class RegisterForm(forms.ModelForm):
     )
 
     password2 = forms.CharField(
-        widget=forms.PasswordInput(),
+        widget=forms.PasswordInput(attrs={
+            'placeholder': 'Repeat your password',
+        }),
         label='Confirm Password',
+
         error_messages={
             'required': 'This field is required.'
         },
@@ -102,39 +105,28 @@ class RegisterForm(forms.ModelForm):
             'password',
         ]
 
-        '''
-        # selects all model fields, but excludes the listed ones
-        # excludes = ['first_name']
-
-        labels = {
-            'first_name': 'First Name',
-            'last_name': 'Last Name',
-            'username': 'Username',
-            'email': 'E-mail',
-        }
-
-        help_texts = {
-            'email': 'The e-mail must be valid.',
-            'username': 'Letters, numbers and @/./+/-/_ only.',
-        }
-
-        error_messages = {
-            'username': {
-                'max_length': 'Username is too long. 150 characters is the limit.',
-            },
-        }
-        '''
-
     def clean_password(self):
-        data = self.cleaned_data.get('password')
+        password = self.cleaned_data.get('password')
 
-        if 'abc123' in data:
+        if 'abc123' in password:
             raise ValidationError(
                 'Your password contains easy to guess patterns.',
                 code='invalid',
             )
 
-        return data
+        return password
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '')
+        exists = User.objects.filter(email=email).exists()
+
+        if exists:
+            raise ValidationError(
+                'This e-mail is already in use.',
+                code='invalid',
+            )
+
+        return email
 
     def clean(self):
         cleaned_data = super().clean()
@@ -144,14 +136,15 @@ class RegisterForm(forms.ModelForm):
 
         if password != password2:
             raise ValidationError(
-                'Your password entries don\'t match'
+                "Your password entries don't match"
             )
 
-        if password:
-            if username in password:
-                raise ValidationError({
-                    'password': ValidationError(
-                        'Your password must not contain your username.',
-                        code='invalid',
-                    ),
-                })
+        if username:
+            if password:
+                if username in password:
+                    raise ValidationError({
+                        'password': ValidationError(
+                            'Your password must not contain your username.',
+                            code='invalid',
+                        ),
+                    })

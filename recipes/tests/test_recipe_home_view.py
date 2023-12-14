@@ -40,7 +40,7 @@ class RecipeHomeViewTests(RecipeTestBase):
         )
 
     def test_recipe_home_is_paginated(self):
-        # this test needs a not multiple recipes
+        # this test needs multiple recipes
         for i in range(3):
             kwargs = {'author_data': {'username': f'u{i}'}, 'slug': f's{i}'}
             self.make_recipe(**kwargs)
@@ -53,3 +53,7 @@ class RecipeHomeViewTests(RecipeTestBase):
             self.assertEqual(paginator.num_pages, 2)
             self.assertEqual(len(paginator.get_page(1)), 2)
             self.assertEqual(len(paginator.get_page(2)), 1)
+
+    def test_invalid_page_querry_uses_page_1(self):
+        response = self.client.get(reverse('recipes:home') + '?page=A')
+        self.assertEqual(response.context['recipes'].number, 1)
