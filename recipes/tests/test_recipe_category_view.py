@@ -7,7 +7,7 @@ class RecipeCategoryViewTests(RecipeTestBase):
 
     def test_recipe_category_view_function_is_correct(self):
         view = resolve(reverse('recipes:category', kwargs={'category_id': 1}))
-        self.assertIs(view.func, views.category)
+        self.assertIs(view.func.view_class, views.RecipeListViewCategory)
 
     def test_recipe_category_view_returns_status_code_404_if_not_found(self):
         response = self.client.get(
@@ -32,7 +32,7 @@ class RecipeCategoryViewTests(RecipeTestBase):
 
         # gets content of the http response
         response = self.client.get(
-            reverse('recipes:recipe', kwargs={'id': recipe.id})
+            reverse('recipes:recipe', kwargs={'pk': recipe.id})
         )
 
         # checks if the recipe is not loaded
