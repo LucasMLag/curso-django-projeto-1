@@ -54,7 +54,8 @@ class RegisterForm(forms.ModelForm):
         help_text=('The e-mail must be valid.'),
 
         error_messages={
-            'required': 'This field is required.'
+            'required': 'This field is required.',
+            'invalid': 'Enter a valid e-mail.',
         },
     )
 
@@ -126,7 +127,7 @@ class RegisterForm(forms.ModelForm):
 
         if password != password2:
             raise ValidationError(
-                "Your password entries don't match"
+                "Your password entries don't match."
             )
 
         if username:

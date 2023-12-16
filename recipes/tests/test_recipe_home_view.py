@@ -41,9 +41,7 @@ class RecipeHomeViewTests(RecipeTestBase):
 
     def test_recipe_home_is_paginated(self):
         # this test needs multiple recipes
-        for i in range(3):
-            kwargs = {'author_data': {'username': f'u{i}'}, 'slug': f's{i}'}
-            self.make_recipe(**kwargs)
+        self.make_recipes(qtd=3)
 
         with patch('recipes.views.PER_PAGE', new=2):
             response = self.client.get(reverse('recipes:home'))
