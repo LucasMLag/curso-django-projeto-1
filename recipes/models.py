@@ -2,6 +2,9 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
+from tag.models import Tag
+from collections import defaultdict
+from django.core.exceptions import ValidationError
 
 
 class Category(models.Model):
@@ -31,6 +34,7 @@ class Recipe(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True
     )
+    tags = models.ManyToManyField(Tag)
 
     def __str__(self):
         return self.title
@@ -42,3 +46,19 @@ class Recipe(models.Model):
         if not self.slug:
             self.slug = f'{slugify(self.title)}'
         return super().save(*args, **kwargs)
+
+    def clean(self, *args, **kwargs):
+        error_messages = defaultdict(list)
+
+        recipe_from_db = Recipe.objects.filter(
+            title__iexact=self.title
+        ).first()
+
+        if recipe_from_db:
+            if recipe_from_db.pk != self.pl:
+                error_messages['title'].append(
+                    'Found recipes with the same title'
+                )
+
+        if error_messages:
+            raise ValidationError(error_messages)

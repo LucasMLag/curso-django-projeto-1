@@ -6,6 +6,7 @@ from recipes.models import Recipe
 from django.views.generic import ListView, DetailView
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
+from tag.models import Tag
 
 import os
 
@@ -27,6 +28,8 @@ class RecipeListViewBase(ListView):
         )
 
         queryset = queryset.select_related('author', 'category')
+
+        queryset = queryset.prefetch_related('tags')
 
         return queryset
 
@@ -87,6 +90,27 @@ class RecipeListViewCategory(RecipeListViewBase):
 
         return context
 
+class RecipeListViewTag(RecipeListViewBase):
+    template_name = 'recipes/pages/tag.html'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(tags__slug=self.kwargs.get('slug', ''))
+        return queryset
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+
+        page_title = Tag.objects.filter(tags__slug=self.kwargs.get('slug', '')).first()
+        
+        if not page_title:
+            page_title = 'No tags found'
+
+        context.update({
+            'page_title': f'"{page_title}" - Tag |',
+        })
+
+        return context
 
 class RecipeListViewSearch(RecipeListViewBase):
     template_name = 'recipes/pages/search.html'
