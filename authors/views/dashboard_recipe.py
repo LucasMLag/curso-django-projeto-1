@@ -19,14 +19,14 @@ class DashboardRecipe(View):
         recipe = None
 
         if id is not None:
-            recipe = Recipe.objects.get(
+            recipe = Recipe.objects.filter(
                 is_published=False,
                 author=self.request.user,
                 pk=id,
-            )
+            ).first()
 
-        if not recipe:
-            raise Http404()
+            if not recipe:
+                raise Http404()
 
         return recipe
 
@@ -46,7 +46,7 @@ class DashboardRecipe(View):
             instance=recipe,
         )
 
-        self.render_recipe(form)
+        return self.render_recipe(form)
 
     def post(self, request, id=None):
         recipe = self.get_recipe(id)
