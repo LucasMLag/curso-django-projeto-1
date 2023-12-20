@@ -29,7 +29,7 @@ class RecipeListViewBase(ListView):
 
         queryset = queryset.select_related('author', 'category')
 
-        queryset = queryset.prefetch_related('tags')
+        queryset = queryset.prefetch_related('tags', 'author__profile')
 
         return queryset
 
@@ -90,6 +90,7 @@ class RecipeListViewCategory(RecipeListViewBase):
 
         return context
 
+
 class RecipeListViewTag(RecipeListViewBase):
     template_name = 'recipes/pages/tag.html'
 
@@ -102,7 +103,7 @@ class RecipeListViewTag(RecipeListViewBase):
         context = super().get_context_data(**kwargs)
 
         page_title = Tag.objects.filter(tags__slug=self.kwargs.get('slug', '')).first()
-        
+
         if not page_title:
             page_title = 'No tags found'
 
@@ -111,6 +112,7 @@ class RecipeListViewTag(RecipeListViewBase):
         })
 
         return context
+
 
 class RecipeListViewSearch(RecipeListViewBase):
     template_name = 'recipes/pages/search.html'
