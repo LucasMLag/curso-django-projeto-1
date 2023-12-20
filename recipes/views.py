@@ -7,6 +7,7 @@ from django.views.generic import ListView, DetailView
 from django.http import JsonResponse
 from django.forms.models import model_to_dict
 from tag.models import Tag
+from django.utils.translation import get_language, gettext as _
 
 import os
 
@@ -39,9 +40,13 @@ class RecipeListViewBase(ListView):
         page_obj, pagination_range = make_pagination(
             self.request, context.get('recipes'), PER_PAGE
         )
+
+        html_language = get_language()
+
         context.update({
             'recipes': page_obj,
             'pagination_range': pagination_range,
+            'html_language': html_language,
         })
 
         return context
@@ -83,9 +88,10 @@ class RecipeListViewCategory(RecipeListViewBase):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
+        category_translation = _('Category')
 
         context.update({
-            'title': f'{context.get('recipes')[0].category.name} - Category | ',
+            'title': f'{context.get('recipes')[0].category.name} - {category_translation} | ',
         })
 
         return context
