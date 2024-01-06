@@ -10,6 +10,8 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from PIL import Image
+from django.db.models import F, Value
+from django.db.models.functions import Concat
 
 
 class Category(models.Model):
@@ -19,7 +21,24 @@ class Category(models.Model):
         return self.name
 
 
+class RecipeManager(models.Manager):
+    def get_published(self):
+        return self.filter(
+            is_published=True
+        ).annotate(
+            author_full_name=Concat(
+                F('author__first_name'), Value(' '),
+                F('author__last_name'), Value(' ('),
+                F('author__username'), Value(')'),
+            )
+        ).order_by('-id').select_related('category', 'author').prefetch_related('tags')
+
+
 class Recipe(models.Model):
+    # Manager
+    objects = RecipeManager()
+
+    # Fields
     title = models.CharField(max_length=65, verbose_name=_('Title'))
     description = models.CharField(max_length=165)
     slug = models.SlugField(unique=True)
@@ -89,7 +108,7 @@ class Recipe(models.Model):
         ).first()
 
         if recipe_from_db:
-            if recipe_from_db.pk != self.pl:
+            if recipe_from_db.pk != self.pk:
                 error_messages['title'].append(
                     'Found recipes with the same title'
                 )
