@@ -24,43 +24,40 @@ def recipe_api_list(request):
             data=request.data,
             context={'request': request},
         )
-        # if serializer.is_valid():
-        #     serializer.save()
-        #     return Response(serializer.validated_data, status=status.HTTP_201_CREATED)
-        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-@api_view()
+@api_view(http_method_names=['get', 'patch', 'delete'])
 def recipe_api_detail(request, pk):
-
-    # <option 1> Looks for a recipe, if not found returns response {"detail": "not found"} and status code 404
-
     recipe = get_object_or_404(
         Recipe.objects.get_published(),
         pk=pk
     )
-    serializer = RecipeSerializer(
-        instance=recipe,
-        context={'request': request},
-    )
-    return Response(serializer.data)
 
-    # <!>
+    if request.method == 'GET':
+        serializer = RecipeSerializer(
+            instance=recipe,
+            context={'request': request},
+        )
+        return Response(serializer.data)
 
-    # <option 2> looks for a recipe, if not found allows you to set response, and status code
+    # Put/Patch needs both to read and write data, so the serializer needs instance=object and data=request.data
+    elif request.method == 'PATCH':
+        serializer = RecipeSerializer(
+            instance=recipe,
+            data=request.data,
+            context={'request': request},
+            partial=True,  # Tells the serializer this is a Patch
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
-    # recipe = Recipe.objects.get_published().filter(pk=pk).first()
-
-    # if recipe:
-    #     serializer = RecipeSerializer(instance=recipe)
-    #     return Response(serializer.data)
-    # else:
-    #     return Response(status=status.HTTP_418_IM_A_TEAPOT)
-
-    # <!>
+    elif request.method == 'DELETE':
+        recipe.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view()
