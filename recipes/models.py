@@ -12,6 +12,8 @@ from django.conf import settings
 from PIL import Image
 from django.db.models import F, Value
 from django.db.models.functions import Concat
+import string
+from random import SystemRandom
 
 
 class Category(models.Model):
@@ -88,7 +90,13 @@ class Recipe(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = f'{slugify(self.title)}'
+            rand_letters = ''.join(
+                SystemRandom().choices(
+                    string.ascii_letters + string.digits,
+                    k=5,
+                )
+            )
+            self.slug = slugify(f'{self.title}-{rand_letters}')
 
         saved = super().save(*args, **kwargs)
 
