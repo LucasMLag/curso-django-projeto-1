@@ -46,6 +46,10 @@ class RecipeSerializer(serializers.ModelSerializer):
     # validate for multiple fields
     def validate(self, attrs):
         # <!> This code block is for the PATCH method, so fields aren't empty and don't cause errors on validations
+        if self.instance is not None and attrs.get('title') is None:
+            attrs['title'] = self.instance.title
+        if self.instance is not None and attrs.get('description') is None:
+            attrs['description'] = self.instance.description
         if self.instance is not None and attrs.get('servings') is None:
             attrs['servings'] = self.instance.servings
         if self.instance is not None and attrs.get('preparation_time') is None:
